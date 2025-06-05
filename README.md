@@ -1,27 +1,26 @@
 # 🛡️ **API Gateway**  
-### *Spring Cloud Gateway Based Microservices Entry Point*
+### *Reactive Spring Cloud Gateway Based Microservices Entry Point*
 
-This project is an **API Gateway** built using **Spring Cloud Gateway**. It serves as a centralized entry point for the microservices architecture, specifically designed to:
+This project is an **API Gateway** built using **Spring Cloud Gateway (Reactive)**. It serves as a centralized entry point for the microservices architecture, specifically designed to:
 
 - 🔁 Route requests to the appropriate microservices (Auth Service & League Service)  
-- 🔐 Validate JWT tokens for secure access control  
-- 🧱 Act as a security and abstraction layer between external clients and internal services  
+- 🔐 Validate JWT tokens for secure and reactive access control  
+- 🧱 Act as a secure abstraction layer between external clients and internal services  
 
 ---
 
 ## 🔧 **Key Features**
-- ✅ **JWT-based Authentication & Authorization**  
-- ✅ **Dynamic Route Management**  
-- ✅ **Custom Filters (Pre/Post)**  
-- ✅ **Secure API Gateway Layer**  
-- ✅ **Scalable Microservices Architecture**
+- ✅ **JWT-based Authentication & Authorization with Reactive Security**  
+- ✅ **Dynamic Route Management with Predicates and Filters**  
+- ✅ **Custom Pre/Post Gateway Filters**  
+- ✅ **Secure, Scalable, and Non-blocking API Gateway Layer**  
+- ✅ **Designed for Reactive Microservices Architectures**
 
 ---
 
 ## 🧩 **Microservices Behind the Gateway**
 
 | Service           | Description |
-|------------------|-------------|
-| 🔐 **Auth Service**   | User registration, login, JWT generation, refresh token, role-based access |
-| 🎮 **League Service** | Provides League of Legends data: match history, champion mastery, etc. |
-
+|-------------------|-------------|
+| 🔐 **Auth Service**   | User registration, login, JWT generation, refresh token, role-based access control |
+| 🎮 **League Service** | Provides League of Legends data: match history, champion mastery, summoner info, etc. |
