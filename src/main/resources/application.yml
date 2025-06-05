@@ -1,0 +1,13 @@
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: league-service
+              uri: http://localhost:8082
+              predicates:
+                - Path=/api/league/**
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
