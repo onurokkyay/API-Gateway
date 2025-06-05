@@ -24,3 +24,13 @@ This project is an **API Gateway** built using **Spring Cloud Gateway (Reactive)
 |-------------------|-------------|
 | 🔐 **Auth Service**   | User registration, login, JWT generation, refresh token, role-based access control |
 | 🎮 **League Service** | Provides League of Legends data: match history, champion mastery, summoner info, etc. |
+
+## 📖 **Swagger UI**
+
+### Auth Service:
+`http://localhost:8080/api/auth/swagger-ui.html`
+### League Service:
+`http://localhost:8080/api/league/swagger-ui.html`
+
+
+---
