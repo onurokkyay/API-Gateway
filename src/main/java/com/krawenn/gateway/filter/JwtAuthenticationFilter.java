@@ -3,6 +3,8 @@ package com.krawenn.gateway.filter;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,9 @@ import java.nio.charset.StandardCharsets;
 @Component
 public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+
+
     @Value("${jwt.secret}")
     private String secretKey;
 
@@ -33,6 +38,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            logger.warn("Unauthorized access attempt to: {}", path);
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
@@ -47,6 +53,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                     .getBody();
             // Optionally, you can set claims as request attributes here
         } catch (Exception e) {
+            logger.error("JWT validation failed: {}", e.getMessage());
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
