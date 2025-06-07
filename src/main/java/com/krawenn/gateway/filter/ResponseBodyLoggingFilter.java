@@ -23,11 +23,9 @@ public class ResponseBodyLoggingFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        logger.info("responsebody filter");
         return chain.filter(exchange.mutate().response(new ServerHttpResponseDecorator(exchange.getResponse()) {
             @Override
             public Mono<Void> writeWith(Publisher<? extends DataBuffer> body) {
-                logger.info("writeWith");
                 if (getDelegate().getHeaders().getContentType() != null &&
                         MediaType.APPLICATION_JSON.isCompatibleWith(getDelegate().getHeaders().getContentType())) {
                     Flux<? extends DataBuffer> flux = Flux.from(body);
@@ -41,7 +39,6 @@ public class ResponseBodyLoggingFilter implements GlobalFilter, Ordered {
                         return exchange.getResponse().bufferFactory().wrap(bytes);
                     }));
                 }
-                logger.info("writeWith else");
                 return super.writeWith(body);
             }
         }).build());
