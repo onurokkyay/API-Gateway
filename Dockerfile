@@ -5,7 +5,7 @@ FROM gradle:8.7-jdk21 AS builder
 WORKDIR /app
 
 # Copy only essential files for caching efficiency
-COPY build.gradle settings.gradle gradle.properties ./
+COPY build.gradle settings.gradle ./
 COPY gradle ./gradle
 
 # Download dependencies
