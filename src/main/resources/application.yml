@@ -8,10 +8,20 @@ spring:
               uri: ${AUTH_SERVICE_URL}
               predicates:
                 - Path=/api/auth/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: authServiceCircuitBreaker
+                    fallbackUri: forward:/auth-fallback
             - id: league-service
               uri: ${LEAGUE_SERVICE_URL}
               predicates:
                 - Path=/api/league/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: leagueServiceCircuitBreaker
+                    fallbackUri: forward:/league-fallback
 
 jwt:
   secret: ${JWT_SECRET}
