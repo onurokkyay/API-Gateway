@@ -52,6 +52,17 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                     .parseClaimsJws(token)
                     .getBody();
             // Optionally, you can set claims as request attributes here
+
+            // Actuator endpoint control
+            if (path.startsWith("/actuator")) {
+                String role = claims.get("role", String.class);
+                if (!"ADMIN".equals(role)) {
+                    logger.warn("Access to actuator denied. Role: {}", role);
+                    exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+                    return exchange.getResponse().setComplete();
+                }
+            }
+            
         } catch (Exception e) {
             logger.error("JWT validation failed: {}", e.getMessage());
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
