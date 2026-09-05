@@ -1,0 +1,25 @@
+# Test configuration.
+#
+# The config server import is mandatory in production on purpose -- a gateway that starts without
+# its routes answers 404 to everything while looking healthy -- but a test must not need one
+# running. Disabling the client here is the only place that override belongs.
+spring:
+  cloud:
+    config:
+      enabled: false
+  config:
+    import: ""
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Never fetched: no test here presents a token to be verified. It exists because the
+          # resource-server auto-configuration needs somewhere to point.
+          jwk-set-uri: http://localhost:0/.well-known/jwks.json
+          issuer-uri: http://localhost:0
+          audiences:
+            - auth-service-clients
+
+gateway:
+  cors:
+    allowed-origins: http://localhost:3000
