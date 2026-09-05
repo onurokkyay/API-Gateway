@@ -22,6 +22,10 @@ public final class PublicPaths {
         // link impossible to complete: the browser was turned away before it could deliver the
         // code it had just been given.
         "/api/me/accounts/*/callback",
+        // One OpenAPI document per service, routed to /api-docs/<service>. Public because a
+        // client generator reads them without a session, and because they describe the API
+        // rather than anyone's data. Each service decides whether to publish one at all.
+        "/api-docs/**",
         "/*/v3/api-docs/**",
         "/*/swagger-ui/**",
         "/*/swagger-ui.html",
