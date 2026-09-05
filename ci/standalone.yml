@@ -1,0 +1,36 @@
+# Configuration for booting the image without a config server.
+#
+# The packaged application.yml requires `spring.config.import: configserver:` on purpose -- a
+# gateway that starts without routes answers 404 to everything while looking healthy. That makes
+# the image untestable on its own, so CI replaces the configuration entirely via
+# SPRING_CONFIG_LOCATION and turns the config client off here.
+#
+# An empty or `optional:` import is not enough: disabling the client removes the resolver that
+# understands the `configserver:` prefix, and an empty string is resolved as a file path. The
+# import must be absent, which means replacing the file rather than overriding one property.
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    config:
+      enabled: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Never fetched: this boot presents no token. It exists because the resource-server
+          # auto-configuration needs somewhere to point.
+          jwk-set-uri: http://localhost:0/.well-known/jwks.json
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+
+gateway:
+  cors:
+    allowed-origins: ""

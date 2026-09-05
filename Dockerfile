@@ -1,33 +1,38 @@
-# -------- Stage 1: Build the application --------
-FROM gradle:8.7-jdk21 AS builder
+# ---- Build stage ----
+FROM eclipse-temurin:25-jdk-alpine AS build
+WORKDIR /workspace
 
-# Set working directory
-WORKDIR /app
-
-# Copy only essential files for caching efficiency
-COPY build.gradle settings.gradle ./
+# Cache the Gradle distribution and dependencies across builds.
+COPY gradlew ./
 COPY gradle ./gradle
+COPY build.gradle settings.gradle gradle.properties ./
+RUN ./gradlew --no-daemon dependencies > /dev/null 2>&1 || true
 
-# Download dependencies
-RUN gradle build -x test --no-daemon || return 0
+COPY config ./config
+COPY src ./src
+RUN ./gradlew --no-daemon bootJar -x test
 
-# Copy source code last (reduces cache invalidation)
-COPY . .
+# ---- Layer extraction for image caching ----
+FROM eclipse-temurin:25-jre-alpine AS extract
+WORKDIR /extract
+COPY --from=build /workspace/build/libs/api-gateway.jar app.jar
+RUN java -Djarmode=tools -jar app.jar extract --layers --destination extracted
 
-# Build the JAR file
-RUN gradle bootJar --no-daemon
-
-# -------- Stage 2: Create minimal runtime image --------
-FROM eclipse-temurin:21-jre
-
-# Set working directory
+# ---- Runtime ----
+FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app
 
-# Copy the built JAR from builder
-COPY --from=builder /app/build/libs/gateway-*.jar app.jar
+RUN addgroup -S gateway && adduser -S gateway -G gateway
+USER gateway
 
-# Expose port (Spring Boot default)
+COPY --from=extract /extract/extracted/dependencies/ ./
+COPY --from=extract /extract/extracted/spring-boot-loader/ ./
+COPY --from=extract /extract/extracted/snapshot-dependencies/ ./
+COPY --from=extract /extract/extracted/application/ ./
+
 EXPOSE 8080
 
-# Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# `java -jar app.jar`, not JarLauncher: the `tools` jarmode above writes a thin jar whose
+# manifest names the main class and points Class-Path at lib/, and ships an empty
+# spring-boot-loader/ layer. Launching through JarLauncher builds green and then fails to start.
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]
