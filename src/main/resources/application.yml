@@ -9,6 +9,12 @@ spring:
     import: "configserver:"
   cloud:
     config:
+      # Named explicitly rather than inherited from spring.application.name. The config server
+      # serves <name>.yml, and leaving it implicit resolved to the Gradle project name instead:
+      # the server happily returned the shared application.yml, the gateway started without
+      # routes or a JWKS location, and the first sign of trouble was a missing ReactiveJwtDecoder
+      # bean rather than anything that mentioned configuration.
+      name: api-gateway
       uri: ${CONFIG_SERVER_URL:http://localhost:8888}
       fail-fast: true
       retry:
