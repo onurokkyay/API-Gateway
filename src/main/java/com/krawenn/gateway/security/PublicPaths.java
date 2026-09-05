@@ -15,6 +15,13 @@ public final class PublicPaths {
         "/api/auth/refresh",
         "/api/auth/logout",
         "/.well-known/**",
+        // Where a platform redirects a browser after a sign-in. A top-level navigation carries no
+        // Authorization header, so this cannot require a token -- the `state` the flow was started
+        // with is what identifies the account, and GameAtlas issues it to a signed-in caller,
+        // spends it on first use and expires it in minutes. Requiring a token here made the Xbox
+        // link impossible to complete: the browser was turned away before it could deliver the
+        // code it had just been given.
+        "/api/me/accounts/*/callback",
         "/*/v3/api-docs/**",
         "/*/swagger-ui/**",
         "/*/swagger-ui.html",
