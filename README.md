@@ -73,7 +73,7 @@ with `spring.cloud.config.enabled: false` and no `spring.config.import` in that 
 ## Public paths
 
 `/api/auth/register`, `/api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`,
-`/api/auth/password/forgot`, `/api/auth/password/reset`, `/.well-known/**`, the per-service Swagger paths, and `/fallback`. Every one of them is a door in
+`/api/auth/password/forgot`, `/api/auth/password/verify-code`, `/api/auth/password/reset`, `/.well-known/**`, the per-service Swagger paths, and `/fallback`. Every one of them is a door in
 the authentication boundary, so the list is kept as short as it can be. `/api/auth/me` is
 deliberately absent: it answers "who am I", which requires being someone. So is
 `/api/auth/password/change`: the two reset endpoints serve somebody who cannot sign in, changing a

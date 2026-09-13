@@ -14,12 +14,15 @@ public final class PublicPaths {
         "/api/auth/login",
         "/api/auth/refresh",
         "/api/auth/logout",
-        // Somebody who has forgotten their password has no token to present, so both steps of a
-        // reset have to be reachable without one. The auth service answers a request for a reset
-        // link identically whether or not the address has an account, and a reset needs the
-        // single-use token from that link -- being public leaks nothing. Changing a password while
-        // signed in (/api/auth/password/change) is deliberately not here.
+        // Somebody who has forgotten their password has no token to present, so every step of a
+        // reset has to be reachable without one. The auth service answers a request for a reset
+        // link identically whether or not the address has an account; exchanging the emailed code
+        // gives the same refusal for a wrong code and an unknown address, and retires the request
+        // after a few wrong ones; a reset needs the single-use token from the link or the code --
+        // being public leaks nothing. Changing a password while signed in
+        // (/api/auth/password/change) is deliberately not here.
         "/api/auth/password/forgot",
+        "/api/auth/password/verify-code",
         "/api/auth/password/reset",
         "/.well-known/**",
         // Where a platform redirects a browser after a sign-in. A top-level navigation carries no
