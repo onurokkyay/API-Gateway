@@ -79,6 +79,27 @@ deliberately absent: it answers "who am I", which requires being someone. So is
 `/api/auth/password/change`: the two reset endpoints serve somebody who cannot sign in, changing a
 password serves somebody who already has.
 
+## Refusals
+
+The gateway's own `401` and `403` answer the same envelope every service behind it answers, so a
+client branches on `code` without caring which hop refused it:
+
+```json
+{ "timestamp": "2026-09-19T10:38:29.710Z", "status": 401, "code": "UNAUTHENTICATED",
+  "message": "Authentication is required", "path": "/api/me" }
+```
+
+`UNAUTHENTICATED` for a request with no usable identity — absent, expired or a signature this
+gateway does not accept, all the same answer, because the difference is a hint to whoever is
+probing and belongs in the access log. `FORBIDDEN` for a verified identity without the role a path
+requires, which here means `/actuator/**`. The `WWW-Authenticate: Bearer` challenge stays on the
+401.
+
+Spring's default entry point answered a bare 401 with no body at all, which is what the mobile
+client measured against this README's promise (2026-09-13). Both the chain's entry point and the
+resource server's are set: one handles a request that carried no token, the other a token that was
+rejected, and setting only one leaves the other empty.
+
 ## Logging
 
 One line per request: method, path, status, duration. No headers, no bodies, no query strings.
