@@ -36,9 +36,11 @@ import reactor.core.publisher.Mono;
 public class SecurityConfig {
 
     private final GatewayCorsProperties corsProperties;
+    private final GatewayErrors errors;
 
-    public SecurityConfig(GatewayCorsProperties corsProperties) {
+    public SecurityConfig(GatewayCorsProperties corsProperties, GatewayErrors errors) {
         this.corsProperties = corsProperties;
+        this.errors = errors;
     }
 
     @Bean
@@ -58,8 +60,14 @@ public class SecurityConfig {
                         .hasRole("ADMIN")
                         .anyExchange()
                         .authenticated())
-                .oauth2ResourceServer(
-                        oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                // Both, and both are needed: the resource server installs its own bare-401 entry
+                // point for a token it rejected, while the chain's handles a request that carried
+                // none at all. Setting one left the other answering an empty body.
+                .exceptionHandling(
+                        handling -> handling.authenticationEntryPoint(errors).accessDeniedHandler(errors))
+                .oauth2ResourceServer(oauth2 -> oauth2.authenticationEntryPoint(errors)
+                        .accessDeniedHandler(errors)
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
                 .build();
     }
 
