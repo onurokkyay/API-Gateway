@@ -52,6 +52,7 @@ class IdentityPropagationFilterTest {
                 .header("alg", "RS256")
                 .subject(subject)
                 .claim(TokenClaims.ROLE, role)
+                .claim(TokenClaims.PREFERRED_USERNAME, "onurokkyay")
                 .issuedAt(Instant.now())
                 .expiresAt(Instant.now().plusSeconds(900))
                 .build();
@@ -64,7 +65,8 @@ class IdentityPropagationFilterTest {
         // the gateway would authenticate one account and hand the service behind it another.
         MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/api/me/games")
                 .header(IdentityHeaders.USER_ID, "01999999-0000-7000-8000-000000000000")
-                .header(IdentityHeaders.USER_ROLE, "ADMIN"));
+                .header(IdentityHeaders.USER_ROLE, "ADMIN")
+                .header(IdentityHeaders.USER_NAME, "admin"));
         CapturingChain chain = new CapturingChain();
 
         StepVerifier.create(filter.filter(exchange, chain).contextWrite(authenticated(token(USER_ID, "USER"))))
@@ -72,6 +74,7 @@ class IdentityPropagationFilterTest {
 
         assertThat(chain.headers().get(IdentityHeaders.USER_ID)).containsExactly(USER_ID);
         assertThat(chain.headers().get(IdentityHeaders.USER_ROLE)).containsExactly("USER");
+        assertThat(chain.headers().get(IdentityHeaders.USER_NAME)).containsExactly("onurokkyay");
     }
 
     @Test

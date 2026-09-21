@@ -17,8 +17,15 @@ public final class IdentityHeaders {
     /** The authenticated account's role, {@code USER} or {@code ADMIN}. */
     public static final String USER_ROLE = "X-User-Role";
 
+    /**
+     * The authenticated account's username, the token's {@code preferred_username}: a public identity
+     * (profile addresses) that the services keep current from here. Never an identifier to key data by;
+     * usernames can change, the id cannot.
+     */
+    public static final String USER_NAME = "X-User-Name";
+
     /** Everything the gateway refuses to forward from a client. */
-    public static final String[] ALL = {USER_ID, USER_ROLE};
+    public static final String[] ALL = {USER_ID, USER_ROLE, USER_NAME};
 
     private IdentityHeaders() {}
 }

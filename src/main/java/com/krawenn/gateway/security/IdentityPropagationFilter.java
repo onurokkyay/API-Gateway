@@ -22,8 +22,8 @@ import reactor.core.publisher.Mono;
  *       {@code X-User-Id: <someone else>} alongside its own valid token must not have that header
  *       survive; without this line the gateway would authenticate one account and hand the
  *       services behind it another, which is a complete authorization bypass.
- *   <li><b>Inject.</b> If the request is authenticated, the token's {@code sub} and {@code role}
- *       are written back under the same names.
+ *   <li><b>Inject.</b> If the request is authenticated, the token's {@code sub}, {@code role} and
+ *       {@code preferred_username} are written back under the same names.
  * </ol>
  *
  * <p>Unauthenticated requests reach here only on permitted paths (login, JWKS, docs), and they
@@ -56,6 +56,10 @@ public class IdentityPropagationFilter implements GlobalFilter, Ordered {
                     String role = jwt.getClaimAsString(TokenClaims.ROLE);
                     if (role != null) {
                         request.header(IdentityHeaders.USER_ROLE, role);
+                    }
+                    String username = jwt.getClaimAsString(TokenClaims.PREFERRED_USERNAME);
+                    if (username != null) {
+                        request.header(IdentityHeaders.USER_NAME, username);
                     }
                     return request;
                 })
