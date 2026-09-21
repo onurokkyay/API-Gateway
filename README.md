@@ -11,7 +11,7 @@ verified against that service's JWKS, so this gateway holds a public key and not
 minting a token.
 
 It **propagates identity**: a verified token's `sub` and `role` are written onto the outgoing
-request as `X-User-Id` and `X-User-Role`.
+request as `X-User-Id`, `X-User-Role` and `X-User-Name`.
 
 It does **not authorize**. Whether a user may touch a particular resource is a question only the
 owning service can answer; encoding those rules here would mean editing the gateway every time a
@@ -38,6 +38,7 @@ needs a JWT library or a key — but it is only sound while both of these hold:
 | --- | --- |
 | `X-User-Id` | The account id — a UUIDv7, the token's `sub`. **Use this as the foreign key.** |
 | `X-User-Role` | `USER` or `ADMIN` |
+| `X-User-Name` | The token's `preferred_username`; display and profile addresses only, never a key — usernames can change |
 
 Both are absent on an anonymous request rather than empty, so "no header" means anonymous without
 having to be told apart from "header present but blank".
