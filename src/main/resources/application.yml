@@ -109,7 +109,7 @@ spring:
             - id: gameatlas
               uri: ${GAMEATLAS_URL:http://gameatlas:8083}
               predicates:
-                - Path=/api/me/**,/api/games/**,/api/users/**,/api/feed,/api/reviews/**,/api/lists/**,/api/reports,/api/badges,/api/series/**,/api/admin/matching/**,/api/admin/igdb/**,/api/admin/reports/**
+                - Path=/api/me/**,/api/games/**,/api/users/**,/api/feed,/api/reviews/**,/api/lists/**,/api/reports,/api/badges,/api/series/**,/api/admin/matching/**,/api/admin/igdb/**,/api/admin/catalogue/**,/api/admin/reports/**
               filters:
                 - name: CircuitBreaker
                   args:
