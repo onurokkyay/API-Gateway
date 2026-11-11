@@ -1,14 +1,6 @@
-# Test configuration.
-#
-# The config server import is mandatory in production on purpose -- a gateway that starts without
-# its routes answers 404 to everything while looking healthy -- but a test must not need one
-# running. Disabling the client here is the only place that override belongs.
+# Test configuration. It replaces the packaged application.yml on the test classpath, so the tests
+# run without routes: none of them goes through one.
 spring:
-  cloud:
-    config:
-      enabled: false
-  config:
-    import: ""
   security:
     oauth2:
       resourceserver:
