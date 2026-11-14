@@ -141,6 +141,15 @@ logging:
   level:
     com.krawenn.gateway: ${GATEWAY_LOG_LEVEL:INFO}
 
+# Requests one caller may make in a minute (RateLimitFilter). Signing in, registering and password
+# resets have their own small budget per address; everything else is counted per signed-in account.
+# Only trust X-Forwarded-For behind a load balancer that sets it.
+gateway.rate-limit:
+  enabled: ${GATEWAY_RATELIMIT_ENABLED:true}
+  per-minute: ${GATEWAY_RATELIMIT_PERMINUTE:300}
+  sign-in-per-minute: ${GATEWAY_RATELIMIT_SIGNINPERMINUTE:20}
+  trust-forwarded-for: ${GATEWAY_RATELIMIT_TRUSTFORWARDEDFOR:false}
+
 # The only CORS configuration in the estate. Routed services sit behind the gateway and never
 # see a browser origin. Empty denies every cross-origin request.
 gateway:
