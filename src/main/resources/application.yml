@@ -1,26 +1,127 @@
+# Everything the gateway needs is in this file, routes included.
+#
+# The routes used to be served by a config server from a separate repository, on the reasoning that
+# routes change often and a config server makes that cheap. In practice a new route always ships
+# with the service change that needs it, a restart was needed either way, and the price was a
+# second service and a second repository that had to be up and in step before the only door into
+# the estate would open. A route is now a commit here, reviewed and versioned with the gateway.
 spring:
   application:
     name: api-gateway
-  config:
-    # Required, not optional. A gateway that starts without its routes is worse than one that
-    # does not start: it answers 404 to everything while looking healthy. Failing loudly is the
-    # honest behaviour, and the retry below covers the ordinary case of the config server simply
-    # being slower to come up than its clients.
-    import: "configserver:"
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # The auth service signs with RS256 and publishes the public half here. The gateway
+          # fetches it server to server, so this is the service's internal address, not the one a
+          # browser would use. Nothing in this file can mint a token -- that is the point of
+          # asymmetric signing, and the reason the old shared `jwt.secret` is gone.
+          jwk-set-uri: ${AUTH_SERVICE_URL:http://auth-service:8081}/.well-known/jwks.json
+          # Verified on every token, not merely present in it. A token minted by something else,
+          # or minted for a different audience, is rejected here rather than downstream.
+          issuer-uri: ${AUTH_JWT_ISSUER:http://auth-service:8081}
+          audiences:
+            - ${AUTH_JWT_AUDIENCE:auth-service-clients}
+
   cloud:
-    config:
-      # Named explicitly rather than inherited from spring.application.name. The config server
-      # serves <name>.yml, and leaving it implicit resolved to the Gradle project name instead:
-      # the server happily returned the shared application.yml, the gateway started without
-      # routes or a JWKS location, and the first sign of trouble was a missing ReactiveJwtDecoder
-      # bean rather than anything that mentioned configuration.
-      name: api-gateway
-      uri: ${CONFIG_SERVER_URL:http://localhost:8888}
-      fail-fast: true
-      retry:
-        initial-interval: 1000
-        max-interval: 5000
-        max-attempts: 12
+    gateway:
+      server:
+        webflux:
+          httpclient:
+            connect-timeout: 5000
+            response-timeout: 10s
+
+          # Applied to every route, present and future.
+          #
+          # CORS is decided here and nowhere else, but the services behind this gateway each have
+          # their own CORS layer -- they are independently deployable and cannot assume a gateway
+          # in front. Forwarding the browser's Origin to them means two layers answer the same
+          # question, and the answers collide in a way curl cannot see:
+          #
+          #     The 'Access-Control-Allow-Origin' header contains multiple values
+          #     'http://localhost:3000, http://localhost:3000', but only one is allowed
+          #
+          # Both were correct and identical, and the browser still refused, because the rule is
+          # one header and not one value. Giving the downstream services matching origin lists
+          # only turned a 403 into this.
+          #
+          # Removing the request headers is what settles it: a service that never sees an Origin
+          # never treats the request as cross-origin, so its CORS filter stays silent and keeps
+          # working for anyone who deploys it without a gateway. Server to server, these headers
+          # mean nothing anyway.
+          default-filters:
+            - RemoveRequestHeader=Origin
+            - RemoveRequestHeader=Access-Control-Request-Method
+            - RemoveRequestHeader=Access-Control-Request-Headers
+
+          routes:
+            # --- OpenAPI specifications ---------------------------------------------------
+            # One path per service rather than a merged document. Springdoc does not merge --
+            # its swagger-ui `urls` setting only produces a dropdown -- and merging two specs
+            # correctly means reconciling component names, which is a job for a build step and
+            # not for a routing layer.
+            #
+            # Named routes so a client generator can be pointed at each in turn. Both services
+            # publish at /v3/api-docs, which is why the path is rewritten rather than passed
+            # through: without SetPath they would collide on one URL at the edge.
+            #
+            # These are as public as the services make them, which is on by default. Turn
+            # springdoc off in each service before this is exposed anywhere real.
+            - id: auth-api-docs
+              uri: ${AUTH_SERVICE_URL:http://auth-service:8081}
+              predicates:
+                - Path=/api-docs/auth
+              filters:
+                - SetPath=/v3/api-docs
+
+            - id: gameatlas-api-docs
+              uri: ${GAMEATLAS_URL:http://gameatlas:8083}
+              predicates:
+                - Path=/api-docs/gameatlas
+              filters:
+                - SetPath=/v3/api-docs
+
+            # --- Auth service -------------------------------------------------------------
+            - id: auth-service
+              uri: ${AUTH_SERVICE_URL:http://auth-service:8081}
+              predicates:
+                - Path=/api/auth/**,/api/admin/users/**,/.well-known/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: authServiceCircuitBreaker
+                    fallbackUri: forward:/fallback
+
+            # --- GameAtlas ----------------------------------------------------------------
+            # Two surfaces: /api/me/** is a caller's own library, and the matching and IGDB
+            # tools under /api/admin act on the catalogue everyone shares. GameAtlas enforces
+            # ADMIN on the second itself; the gateway only has to route it there.
+            #
+            # /api/games/** is the same catalogue seen by everyone -- the release calendar, and
+            # whatever else stops depending on who is asking. Signed in like the rest: it is not
+            # in the gateway's public paths, so a token is still required.
+            #
+            # /api/admin is deliberately not matched as one prefix: /api/admin/users/**
+            # belongs to the auth service above. Naming the two halves by their full paths is
+            # what stops one service swallowing the other's admin surface -- and routing
+            # /api/dev/** here, as this did until the split, now sends every such request to a
+            # service that answers 404.
+            - id: gameatlas
+              uri: ${GAMEATLAS_URL:http://gameatlas:8083}
+              predicates:
+                - Path=/api/me/**,/api/games/**,/api/users/**,/api/feed,/api/reviews/**,/api/lists/**,/api/reports,/api/badges,/api/series/**,/api/admin/matching/**,/api/admin/igdb/**,/api/admin/catalogue/**,/api/admin/reports/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: gameatlasCircuitBreaker
+                    fallbackUri: forward:/fallback
+
+    # Circuit-breaker settings used to sit here, under
+    # spring.cloud.circuitbreaker.resilience4j.instances, and were read by nothing: that binding
+    # comes from the standalone Resilience4J Spring Boot starter, which the gateway does not
+    # depend on. Every route ran on the library's one-second time limiter instead, so any request
+    # slower than that came back as 503 from /fallback -- which is what a service being down looks
+    # like. They now live in the gateway's own ResilienceConfig, where they take effect.
 
 server:
   port: ${SERVER_PORT:8080}
@@ -39,3 +140,10 @@ management:
 logging:
   level:
     com.krawenn.gateway: ${GATEWAY_LOG_LEVEL:INFO}
+
+# The only CORS configuration in the estate. Routed services sit behind the gateway and never
+# see a browser origin. Empty denies every cross-origin request.
+gateway:
+  cors:
+    allowed-origins: ${GATEWAY_CORS_ALLOWEDORIGINS:}
+    allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS

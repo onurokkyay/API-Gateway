@@ -45,31 +45,17 @@ having to be told apart from "header present but blank".
 
 ## Configuration
 
-Routes, JWKS location and CORS come from the config server
-([Config-Repo](https://github.com/onurokkyay/Config-Repo) → `api-gateway.yml`).
+Routes, the JWKS location and CORS are in the gateway's own
+[`application.yml`](src/main/resources/application.yml). A new route is a commit here.
 
-The import is **mandatory**, not `optional:`. A gateway that starts without its routes answers
-404 to everything while reporting itself healthy, which is worse than not starting at all. The
-retry settings in `application.yml` cover the ordinary case of the config server simply being
-slower to come up than its clients.
+They used to come from a config server reading a separate repository. That made the only door
+into the estate depend on a second service and a second repository being up and in step, for a
+file that changes a few times a month and needs a restart to take effect either way. A gateway
+that starts without its routes answers 404 to everything while reporting itself healthy; with the
+routes inside the image, it cannot start without them.
 
-This is also the only service still reading from the config server, and that is deliberate: its
-configuration is **routes**, which change whenever a service is added or moved — exactly what a
-config server makes cheap. The auth service's configuration is signing keys and lifetimes, which
-change almost never and need a restart anyway, so it reads its environment directly.
-
-### Running without a config server
-
-For a container smoke test, replace the configuration entirely and turn the client off — an empty
-or `optional:` import is not enough, because disabling the client removes the resolver that
-understands the `configserver:` prefix:
-
-```bash
-docker run -e SPRING_CONFIG_LOCATION=file:/app/config/standalone.yml \
-           -v "$PWD/standalone:/app/config:ro" api-gateway:local
-```
-
-with `spring.cloud.config.enabled: false` and no `spring.config.import` in that file.
+Addresses and origins still come from the environment: `AUTH_SERVICE_URL`, `GAMEATLAS_URL`,
+`AUTH_JWT_ISSUER`, `AUTH_JWT_AUDIENCE` and `GATEWAY_CORS_ALLOWEDORIGINS`.
 
 ## Public paths
 

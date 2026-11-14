@@ -52,15 +52,11 @@ jobs:
       # The image is started, not only built. A gateway whose entrypoint names a class the
       # `tools` jarmode does not ship builds perfectly and dies on first run.
       #
-      # It is started with the config client disabled, because the thing under test is the
-      # image, not whether a config server happens to be reachable from a CI runner. In
-      # production that import is mandatory and this override is absent.
+      # It starts on the configuration packaged inside it. Nothing it names has to be reachable:
+      # the JWKS is fetched when the first token arrives, and this boot presents none.
       - name: Start it and wait for the application to report healthy
         run: |
-          docker run -d --name gateway-ci --network host \
-            -e SPRING_CONFIG_LOCATION=file:/app/ci/standalone.yml \
-            -v "$PWD/ci:/app/ci:ro" \
-            api-gateway:ci
+          docker run -d --name gateway-ci --network host api-gateway:ci
 
           for attempt in $(seq 1 60); do
             if curl -fsS http://localhost:8080/actuator/health > /dev/null 2>&1; then
