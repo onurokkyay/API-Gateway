@@ -65,6 +65,15 @@ public class GatewayErrors implements ServerAuthenticationEntryPoint, ServerAcce
         return write(exchange, HttpStatus.FORBIDDEN, "FORBIDDEN", "You do not have access to this resource");
     }
 
+    /** An app older than the oldest one still served: the app shows one "please update" screen. */
+    public Mono<Void> updateRequired(ServerWebExchange exchange) {
+        return write(
+                exchange,
+                HttpStatus.UPGRADE_REQUIRED,
+                "APP_UPDATE_REQUIRED",
+                "This version of the app is no longer supported; please update");
+    }
+
     /** Too many requests from one caller in a minute; {@code Retry-After} says when the next is welcome. */
     public Mono<Void> tooManyRequests(ServerWebExchange exchange, long retryAfterSeconds) {
         exchange.getResponse().getHeaders().set(HttpHeaders.RETRY_AFTER, Long.toString(retryAfterSeconds));

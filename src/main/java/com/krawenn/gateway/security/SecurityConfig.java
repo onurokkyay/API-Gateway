@@ -32,7 +32,11 @@ import reactor.core.publisher.Mono;
  */
 @Configuration
 @EnableWebFluxSecurity
-@EnableConfigurationProperties({GatewayCorsProperties.class, RateLimitProperties.class})
+@EnableConfigurationProperties({
+    GatewayCorsProperties.class,
+    RateLimitProperties.class,
+    MinimumClientVersionProperties.class
+})
 public class SecurityConfig {
 
     private final GatewayCorsProperties corsProperties;

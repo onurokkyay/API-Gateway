@@ -150,6 +150,12 @@ gateway.rate-limit:
   sign-in-per-minute: ${GATEWAY_RATELIMIT_SIGNINPERMINUTE:20}
   trust-forwarded-for: ${GATEWAY_RATELIMIT_TRUSTFORWARDEDFOR:false}
 
+# The oldest app version still served, major.minor.patch. An app sending an older X-App-Version gets
+# 426 APP_UPDATE_REQUIRED on every request. Empty serves every version, and a request without the
+# header (the web client) is always served.
+gateway.client:
+  minimum-version: ${GATEWAY_CLIENT_MINIMUMVERSION:}
+
 # The only CORS configuration in the estate. Routed services sit behind the gateway and never
 # see a browser origin. Empty denies every cross-origin request.
 gateway:
