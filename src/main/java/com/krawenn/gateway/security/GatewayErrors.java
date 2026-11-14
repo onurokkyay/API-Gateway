@@ -65,6 +65,12 @@ public class GatewayErrors implements ServerAuthenticationEntryPoint, ServerAcce
         return write(exchange, HttpStatus.FORBIDDEN, "FORBIDDEN", "You do not have access to this resource");
     }
 
+    /** Too many requests from one caller in a minute; {@code Retry-After} says when the next is welcome. */
+    public Mono<Void> tooManyRequests(ServerWebExchange exchange, long retryAfterSeconds) {
+        exchange.getResponse().getHeaders().set(HttpHeaders.RETRY_AFTER, Long.toString(retryAfterSeconds));
+        return write(exchange, HttpStatus.TOO_MANY_REQUESTS, "RATE_LIMITED", "Too many requests; try again shortly");
+    }
+
     /**
      * Writes the envelope the services behind this gateway write.
      *

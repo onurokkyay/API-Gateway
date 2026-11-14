@@ -13,5 +13,10 @@ spring:
             - auth-service-clients
 
 gateway:
+  rate-limit:
+    enabled: false
+    per-minute: 300
+    sign-in-per-minute: 10
+    trust-forwarded-for: false
   cors:
     allowed-origins: http://localhost:3000
